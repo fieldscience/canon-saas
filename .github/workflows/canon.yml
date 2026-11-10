@@ -1,0 +1,60 @@
+# Canon (STD-0021). Installed by "canon init". This workflow is the nightly cross-repo check only.
+# The pull request check is not here: it comes from the org ruleset, which runs the org Canon gate on every
+# repo whose "canon" custom property is set to "stable". A repo carries no copy of Canon and no PR job.
+# Each step below runs the Canon channel through the pinned gate action, never code from this repo.
+# The nightly needs the org Canon setup (marketplace Actions access and the channel/stable branch); until then
+# the run fails at "Set up job".
+# Cross-repo links are resolved from the org-wide index, which a central nightly job publishes on the
+# marketplace canon/index branch. This workflow holds no cross-repo credential: the reader action below makes
+# the published index available to the CLI. The org admin adds this repo to the Canon Index Reader App
+# installation so the central job indexes it.
+# A stale org index makes the nightly check go red on purpose; it clears when the central job runs again.
+# The published views are at https://github.com/fieldscience/marketplace/tree/canon/index/views
+name: canon
+
+on:
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  # Runs on schedule or workflow_dispatch, and only on the default branch: a dispatch from any
+  # other branch is skipped, so this job runs only default-branch (trusted) code.
+  nightly:
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    # actions: read lets the check find this commit's test results artifact when .canon.json declares results.artifact.
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      # CHK-14 reads the default branch from refs/remotes/origin/HEAD, which actions/checkout does not set.
+      # Naming the branch makes this local only: no network and no credentials.
+      - name: Set origin/HEAD to the default branch
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: git remote set-head origin "$DEFAULT_BRANCH"
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 20
+      # Makes the org-wide index available to the CLI (sets CANON_INDEX_FILE for the steps below).
+      - uses: fieldscience/marketplace@canon/index
+      - name: Fetch the org index
+        uses: fieldscience/marketplace/canon/gate@channel/stable
+        with:
+          channel: stable
+          command: index --fetch --all
+      # Warnings (exit 2) fail here too, including unresolved cross-repo links (CHK-06) and a stale org index.
+      - name: Cross-repo problems fail the nightly run
+        uses: fieldscience/marketplace/canon/gate@channel/stable
+        with:
+          channel: stable
+          command: check

@@ -1,0 +1,45 @@
+{
+  "prefix": "CE",
+  "system": "Canon Engine",
+  "legacy": false,
+  "repo": "fieldscience/canon-saas",
+  "registry": "github:fieldscience/marketplace@main:governance/prefix-registry.md",
+  "index": "github:fieldscience/marketplace@canon/index:index.json",
+  "categories": {
+    "LEDGER": "Hash-chained, append-only ledger"
+  },
+  "sharedCategories": [],
+  "layers": {
+    "shared": [],
+    "app": []
+  },
+  "tests": [
+    {
+      "preset": "jest",
+      "glob": "test/**/*.test.ts"
+    }
+  ],
+  "approvers": {
+    "product": "@biospherik",
+    "ea": "@biospherik",
+    "developer": "issue assignee",
+    "steward": ""
+  },
+  "handEdit": "warn",
+  "project": null,
+  "thresholds": {
+    "requirementsPerFeature": 8,
+    "tasksPerPlan": 15
+  },
+  "concerns": [
+    "Determinism: same inputs give the same outputs on any machine; no LLM call, no network, no wall clock inside a computation",
+    "Air-gap: runs self-hosted with no network access and no runtime dependency fetched at run time",
+    "Tool-agnostic: no GitHub, Azure DevOps, GitLab or Jira logic in the engine; adapters only",
+    "Tamper evidence: can a change, removal, insertion or reordering of a record go undetected?"
+  ],
+  "results": {
+    "files": [
+      "test-results/*.xml"
+    ]
+  }
+}

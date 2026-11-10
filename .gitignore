@@ -1,0 +1,4 @@
+.canon/cache/
+docs/changes/*/raw/
+node_modules/
+test-results/
